@@ -1,14 +1,14 @@
-# webserial-receipt-printer
+# WebSerialReceiptPrinter
 
 This is an library that allows you to print to a receipt printer using WebSerial. This can either be a printer connected using a serial port, or a printer connected in any other way where the driver sets up a virtual serial port for compatiblitity reasons.
 
-### What does this library do?
+## What does this library do?
 
 In order to print a receipt on a receipt printer you need to build the receipt and encode it as in the ESC/POS or StarPRNT language. You can use the [`ThermalPrinterEncoder`](https://github.com/NielsLeenheer/ThermalPrinterEncoder) library for this. You end up with an array of raw bytes that needs to be send to the printer. One way to do that is using this library and WebSerial.
 
-### How to use it?
+## How to use it?
 
-Load the `webserial-receipt-printer.umd.js` file in the browser and instantiate a `WebSerialReceiptPrinter` object. 
+Load the `webserial-receipt-printer.umd.js` file from the `dist` directory in the browser and instantiate a `WebSerialReceiptPrinter` object. 
 
     <script src='webserial-receipt-printer.umd.js'></script>
 
@@ -26,8 +26,29 @@ Or import the `webserial-receipt-printer.esm.js` module:
     const receiptPrinter = new WebSerialReceiptPrinter();
 
 
+## Configuration
 
-### Connect to a receipt printer
+When you create the `WebSerialReceiptPrinter` object you can specify a number of options to help with the library with connecting to the device. 
+
+### Serial port settings
+
+Many devices that use serial ports can be configured to use different speeds and settings like databits, stopbits and parity and flow control. Sometimes these settings are hardcoded, sometimes they can be configured by DIP switches or other means. See the manual of your device for more information about how your device is configured and match the settings of your device with the properties below:
+
+- `baudRate`: Number that indicates the speed, defaults to `9600`.
+- `bufferSize`: Size of the read and write buffers, defaults to `255`.
+- `dataBits`: Number of data bits per frame, either `7` or `8`, defaults to `8`.
+- `flowControl`: The flow control type, either `none`, or `hardware`, defaults to `none`.
+- `parity`: The parity mode, either `none`, `even` or `odd`. The default value is `none`.
+- `stopBits`: The number of stop bits at the end of the frame. Can be either `1` or `2` and defaults to `1`.
+
+For example, to set a baud rate of `9600`:
+
+    const customerDisplay = new WebSerialCustomerDisplay({ 
+        baudRate: 9600
+    });
+
+
+## Connect to a receipt printer
 
 The first time you have to manually connect to the receipt printer by calling the `connect()` function. This function must be called as the result of an user action, for example clicking a button. You cannot call this function on page load.
 
@@ -52,11 +73,17 @@ To find out when a receipt printer is connected you can listen for the `connecte
 
 The callback of the `connected` event is passed an object with the following properties:
 
+-   `type`<br>
+    Type of the connection that is used, in this case it is always `serial`.
 -   `vendorId`<br>
     The USB vendor ID or null when it is not available.
 -   `productId`<br>
     The USB product ID or null when it is not available.
 
+
+## Commands
+
+Once connected you can use the following command to print receipts.
 
 ### Printing receipts
 
@@ -67,8 +94,8 @@ For example:
     /* Encode the receipt */
 
     let encoder = new ThermalPrinterEncoder({
-        language:  'esc-pos'',
-        codepageMapping: 'epson''
+        language:  'esc-pos',
+        codepageMapping: 'epson'
     });
 
     let data = encoder
@@ -83,7 +110,7 @@ For example:
     receiptPrinter.print(data);
 
 
-### License
+## License
 
 MIT
 
