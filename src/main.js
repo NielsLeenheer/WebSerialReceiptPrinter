@@ -86,6 +86,7 @@ class WebSerialReceiptPrinter {
 	async print(command) {
 		const writer = this._internal.port.writable.getWriter();
 		await writer.write(command);
+		writer.releaseLock();
 	}
 
 	addEventListener(n, f) {
