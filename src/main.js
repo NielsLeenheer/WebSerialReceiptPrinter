@@ -6,6 +6,7 @@ class WebSerialReceiptPrinter {
 		this._internal = {
 			emitter:    new EventEmitter(),
 			port:     	null,
+			reader:     null,
 			profile:	null,
 			queue:		[],
 			running: 	false,
@@ -84,6 +85,27 @@ class WebSerialReceiptPrinter {
 
 		this._internal.emitter.emit('disconnected');
 	}
+
+	async listen() {
+		while (this._internal.port.readable) {
+            this._internal.reader = this._internal.port.readable.getReader();
+
+			try {
+				while (true) {
+                    const { value, done } = await this._internal.reader.read();
+
+					if (done) {
+                        this._internal.reader.releaseLock();
+						break;
+					}
+					if (value) {
+						this._internal.emitter.emit('data', value);
+					}
+				}
+			} catch (error) {
+			}
+		}	
+	}
 	
 	async print(command) {
 		this._internal.queue.push(command);
@@ -102,7 +124,7 @@ class WebSerialReceiptPrinter {
 		let command;
 
 		while (command = this._internal.queue.shift()) {
-		await writer.write(command);
+			await writer.write(command);
 		}
 
 		writer.releaseLock();
