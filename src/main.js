@@ -7,6 +7,8 @@ class WebSerialReceiptPrinter {
 			emitter:    new EventEmitter(),
 			port:     	null,
 			profile:	null,
+			queue:		[],
+			running: 	false,
 			options:	Object.assign({
 				baudRate:		9600,
 				bufferSize:		255,
@@ -84,9 +86,28 @@ class WebSerialReceiptPrinter {
 	}
 	
 	async print(command) {
+		this._internal.queue.push(command);
+		this.run();
+	};
+
+	async run() {
+		if (this._internal.running) {
+			return;
+		}
+
+		this._internal.running = true;
+
 		const writer = this._internal.port.writable.getWriter();
+
+		let command;
+
+		while (command = this._internal.queue.shift()) {
 		await writer.write(command);
+		}
+
 		writer.releaseLock();
+
+		this._internal.running = false;
 	}
 
 	addEventListener(n, f) {
