@@ -10,6 +10,7 @@ class WebSerialReceiptPrinter {
 			profile:	null,
 			queue:		[],
 			running: 	false,
+			closing:	false,
 			options:	Object.assign({
 				baudRate:		9600,
 				bufferSize:		255,
@@ -59,11 +60,12 @@ class WebSerialReceiptPrinter {
 
 	async open(port) {
 		this._internal.port = port;
+		this._internal.closing = false;
 
 		await this._internal.port.open(this._internal.options);
 
 		let info = this._internal.port.getInfo();
-
+		
 		this._internal.emitter.emit('connected', {
 			type:				'serial',
 			vendorId: 			info.usbVendorId || null,
@@ -78,6 +80,10 @@ class WebSerialReceiptPrinter {
 			return;
 		}
 
+		this._internal.closing = true;
+		this._internal.reader.cancel();
+
+		await this._internal.reader.closed;
 		await this._internal.port.close();
 
 		this._internal.port = null;
@@ -87,7 +93,7 @@ class WebSerialReceiptPrinter {
 	}
 
 	async listen() {
-		while (this._internal.port.readable) {
+		while (this._internal.port.readable && this._internal.closing === false) {
             this._internal.reader = this._internal.port.readable.getReader();
 
 			try {
@@ -95,7 +101,6 @@ class WebSerialReceiptPrinter {
                     const { value, done } = await this._internal.reader.read();
 
 					if (done) {
-                        this._internal.reader.releaseLock();
 						break;
 					}
 					if (value) {
@@ -103,6 +108,8 @@ class WebSerialReceiptPrinter {
 					}
 				}
 			} catch (error) {
+			} finally {
+				this._internal.reader.releaseLock();
 			}
 		}	
 	}
@@ -113,6 +120,10 @@ class WebSerialReceiptPrinter {
 	};
 
 	async run() {
+		if (this._internal.closing) {
+			return;
+		}
+		
 		if (this._internal.running) {
 			return;
 		}
