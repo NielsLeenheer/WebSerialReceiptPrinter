@@ -9,6 +9,7 @@ export default [
 		output: {
 			name: 'WebSerialReceiptPrinter',
 			file: 'dist/webserial-receipt-printer.umd.js',
+			sourcemap: true,
 			format: 'umd'
 		},
 		plugins: [
@@ -22,6 +23,7 @@ export default [
 		input: 'src/main.js',
 		output: { 
 			file: 'dist/webserial-receipt-printer.esm.js', 
+			sourcemap: true,
 			format: 'es' 
 		},
 		plugins: [
