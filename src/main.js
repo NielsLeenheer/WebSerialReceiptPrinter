@@ -18,10 +18,6 @@ class WebSerialReceiptPrinter extends ReceiptPrinter {
 	constructor(options) {
 		super();
 		
-		this._internal = {
-
-		}
-
 		this.#emitter = new EventEmitter();
 
 		this.#options =	Object.assign({
