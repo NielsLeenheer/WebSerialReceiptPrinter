@@ -4,30 +4,38 @@ class ReceiptPrinter {}
 
 class WebSerialReceiptPrinter extends ReceiptPrinter {
 
+	#emitter;
+
+	#options = {};
+	#port = null;
+	#reader = null;
+	#queue = [];
+	#state = {
+		running:	false,
+		closing:	false
+	}
+
 	constructor(options) {
 		super();
 		
 		this._internal = {
-			emitter:    new EventEmitter(),
-			port:     	null,
-			reader:     null,
-			profile:	null,
-			queue:		[],
-			running: 	false,
-			closing:	false,
-			options:	Object.assign({
-				baudRate:		9600,
-				bufferSize:		255,
-				dataBits:		8,
-				flowControl:	'none',
-				parity:			'none',
-				stopBits:		1
-			}, options)
-		};
+
+		}
+
+		this.#emitter = new EventEmitter();
+
+		this.#options =	Object.assign({
+			baudRate:		9600,
+			bufferSize:		255,
+			dataBits:		8,
+			flowControl:	'none',
+			parity:			'none',
+			stopBits:		1
+		}, options);
 
 		navigator.serial.addEventListener('disconnect', event => {
-			if (this._internal.port == event.target) {
-				this._internal.emitter.emit('disconnected');
+			if (this.#port == event.target) {
+				this.#emitter.emit('disconnected');
 			}
 		});
 	}
@@ -37,7 +45,7 @@ class WebSerialReceiptPrinter extends ReceiptPrinter {
 			let port = await navigator.serial.requestPort();
 			
 			if (port) {
-				await this.open(port);
+				await this.#open(port);
 			}
 		}
 		catch(error) {
@@ -58,19 +66,19 @@ class WebSerialReceiptPrinter extends ReceiptPrinter {
 		})
 
 		if (matches.length == 1) {
-			await this.open(matches[0]);
+			await this.#open(matches[0]);
 		}
 	}
 
-	async open(port) {
-		this._internal.port = port;
-		this._internal.closing = false;
+	async #open(port) {
+		this.#port = port;
+		this.#state.closing = false;
 
-		await this._internal.port.open(this._internal.options);
+		await this.#port.open(this.#options);
 
-		let info = this._internal.port.getInfo();
+		let info = this.#port.getInfo();
 		
-		this._internal.emitter.emit('connected', {
+		this.#emitter.emit('connected', {
 			type:				'serial',
 			vendorId: 			info.usbVendorId || null,
 			productId: 			info.usbProductId || null,
@@ -80,75 +88,79 @@ class WebSerialReceiptPrinter extends ReceiptPrinter {
 	}
 
 	async disconnect() {
-		if (!this._internal.port) {
+		if (!this.#port) {
 			return;
 		}
 
-		this._internal.closing = true;
-		this._internal.reader.cancel();
+		this.#state.closing = true;
+		this.#reader.cancel();
 
-		await this._internal.reader.closed;
-		await this._internal.port.close();
+		await this.#reader.closed;
+		await this.#port.close();
 
-		this._internal.port = null;
-		this._internal.profile = null;
+		this.#port = null;
 
-		this._internal.emitter.emit('disconnected');
+		this.#emitter.emit('disconnected');
 	}
 
 	async listen() {
-		while (this._internal.port.readable && this._internal.closing === false) {
-            this._internal.reader = this._internal.port.readable.getReader();
+		this.#read();
+		return true;
+	}
+
+	async #read() {
+		while (this.#port.readable && this.#state.closing === false) {
+            this.#reader = this.#port.readable.getReader();
 
 			try {
 				while (true) {
-                    const { value, done } = await this._internal.reader.read();
+                    const { value, done } = await this.#reader.read();
 
 					if (done) {
 						break;
 					}
 					if (value) {
-						this._internal.emitter.emit('data', value);
+						this.#emitter.emit('data', value);
 					}
 				}
 			} catch (error) {
 			} finally {
-				this._internal.reader.releaseLock();
+				this.#reader.releaseLock();
 			}
 		}	
 	}
 	
 	async print(command) {
-		this._internal.queue.push(command);
+		this.#queue.push(command);
 		this.run();
 	};
 
 	async run() {
-		if (this._internal.closing) {
+		if (this.#state.closing) {
 			return;
 		}
 		
-		if (this._internal.running) {
+		if (this.#state.running) {
 			return;
 		}
 
-		this._internal.running = true;
+		this.#state.running = true;
 
-		const writer = this._internal.port.writable.getWriter();
+		const writer = this.#port.writable.getWriter();
 
 		let command;
 
-		while (command = this._internal.queue.shift()) {
+		while (command = this.#queue.shift()) {
 			await writer.write(command);
 		}
 
 		writer.releaseLock();
 
-		this._internal.running = false;
+		this.#state.running = false;
 	}
 
 	addEventListener(n, f) {
-		this._internal.emitter.on(n, f);
+		this.#emitter.on(n, f);
 	}
 }
 
