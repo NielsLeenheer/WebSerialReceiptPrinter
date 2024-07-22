@@ -43,7 +43,7 @@ Many devices that use serial ports can be configured to use different speeds and
 
 For example, to set a baud rate of `9600`:
 
-    const customerDisplay = new WebSerialReceiptPrinter({ 
+    const receiptPrinter = new WebSerialReceiptPrinter({ 
         baudRate: 9600
     });
 
