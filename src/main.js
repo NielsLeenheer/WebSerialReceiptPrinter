@@ -1,8 +1,12 @@
 import EventEmitter from "./event-emitter.js";
 
-class WebSerialReceiptPrinter {
+class ReceiptPrinter {}
+
+class WebSerialReceiptPrinter extends ReceiptPrinter {
 
 	constructor(options) {
+		super();
+		
 		this._internal = {
 			emitter:    new EventEmitter(),
 			port:     	null,
