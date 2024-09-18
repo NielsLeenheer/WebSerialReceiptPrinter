@@ -4,7 +4,7 @@ This is an library that allows you to print to a receipt printer using WebSerial
 
 ## What does this library do?
 
-In order to print a receipt on a receipt printer you need to build the receipt and encode it as in the ESC/POS or StarPRNT language. You can use the [`ThermalPrinterEncoder`](https://github.com/NielsLeenheer/ThermalPrinterEncoder) library for this. You end up with an array of raw bytes that needs to be send to the printer. One way to do that is using this library and WebSerial.
+In order to print a receipt on a receipt printer you need to build the receipt and encode it as in the ESC/POS or StarPRNT language. You can use the [`ReceiptPrinterEncoder`](https://github.com/NielsLeenheer/ReceiptPrinterEncoder) library for this. You end up with an array of raw bytes that needs to be send to the printer. One way to do that is using this library and WebSerial.
 
 ## How to use it?
 
@@ -93,7 +93,7 @@ For example:
 
     /* Encode the receipt */
 
-    let encoder = new ThermalPrinterEncoder({
+    let encoder = new ReceiptPrinterEncoder({
         language:  'esc-pos',
         codepageMapping: 'epson'
     });
