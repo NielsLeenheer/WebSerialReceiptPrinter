@@ -1,8 +1,8 @@
 import EventEmitter from "./event-emitter.js";
 
-class ReceiptPrinter {}
+class ReceiptPrinterDriver {}
 
-class WebSerialReceiptPrinter extends ReceiptPrinter {
+class WebSerialReceiptPrinter extends ReceiptPrinterDriver {
 
 	#emitter;
 
