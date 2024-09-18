@@ -1,6 +1,6 @@
 {
-  "name": "webserial-receipt-printer",
-  "version": "1.1.0",
+  "name": "@point-of-sale/webserial-receipt-printer",
+  "version": "2.0.0",
   "type": "module",
   "exports": {
       "browser": {
